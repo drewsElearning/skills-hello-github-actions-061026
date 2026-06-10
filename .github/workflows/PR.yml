@@ -1,0 +1,30 @@
+name: Enforce PR Template Usage
+
+on:
+  pull_request:
+    types: [opened, edited]
+
+jobs:
+  validate-template-usage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download PR Template
+        run: |
+          curl -s https://raw.githubusercontent.com/${{ github.repository }}/main/.github/pull_request_template.md > template.md
+
+      - name: Compare PR Body vs Template
+        run: |
+          PR_BODY=$(jq -r '.pull_request.body' "$GITHUB_EVENT_PATH")
+
+          echo "$PR_BODY" > pr_body.md
+
+          DIFF=$(diff template.md pr_body.md | wc -l)
+
+          if [ "$DIFF" -lt 5 ]; then
+            echo "❌ PR appears unchanged from template. Please fill it out."
+            exit 1
+          fi
+
+          echo "✅ PR content updated from template"
+``
